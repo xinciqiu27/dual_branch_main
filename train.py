@@ -83,14 +83,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--lambda-exp", type=float, default=0.0)
     p.add_argument("--lambda-imp", type=float, default=0.0)
     # 0.25
-    p.add_argument("--lambda-tss", type=float, default=0.25)
+    p.add_argument("--lambda-tss", type=float, default=0.05)
     p.add_argument("--lambda-l2", type=float, default=1e-5)
 
     # 文本相似图构建参数。
     p.add_argument("--mashup-topk", type=int, default=20)
     p.add_argument("--api-topk", type=int, default=20)
-    p.add_argument("--mashup-threshold", type=float, default=0.34)
-    p.add_argument("--api-threshold", type=float, default=0.34)
+    p.add_argument("--mashup-threshold", type=float, default=0.30)
+    p.add_argument("--api-threshold", type=float, default=0.30)
     p.add_argument("--graph-mode", type=str, default="threshold", choices=["threshold", "topk"])
     p.add_argument("--no-self-loop", action="store_true")
 

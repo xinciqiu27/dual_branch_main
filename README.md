@@ -1,43 +1,18 @@
-# Dual-Branch Web API Recommendation
+# Complementarity-Aware Web API Recommendation via Explicit and Implicit Requirement Modeling
 
-Research code for a dual-branch Web API recommendation framework with:
+Code for the paper "Complementarity-Aware Web API Recommendation via Explicit and Implicit Requirement Modeling".
 
-- an explicit branch for residual-demand matching
-- an implicit branch for complementary context modeling
-- multiple text encoder backends
-- multiple data split and negative sampling strategies
-- joint and staged training variants for comparison
+The task is to recommend additional Web APIs that are both relevant to the Mashup requirement and complementary to the already selected Web API set.
 
-This repository contains source code only. Local datasets, generated texts, training outputs, and experiment archives are intentionally excluded from version control.
-
-## Repository Structure
-
-```text
-dual_branch_main/
-+-- src/               # core model, data pipeline, losses, metrics, training utilities
-+-- scripts/           # data preparation, LLM text generation, tuning, and analysis helpers
-+-- train.py           # main training entry
-+-- requirements.txt   # Python dependencies
-`-- README.md
-```
-
-## Environment
-
-Recommended:
-
-- Python 3.9+
-- PyTorch 2.1+
-- CUDA optional
-
-Install dependencies:
+## Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Expected Data Layout
+## Data
 
-The repository does not include the dataset. Place your local data under `data/` using the following layout:
+Prepare:
 
 ```text
 data/
@@ -46,106 +21,31 @@ data/
 |   +-- API_desc.csv
 |   +-- train.txt
 |   `-- test.txt
-+-- llm/
-|   +-- mashup_expanded.csv      # optional
-|   +-- api_expanded.csv         # optional
-|   `-- residual_text.csv        # optional
-`-- cache/
+`-- llm/
 ```
 
-Required columns:
+## Default Pipeline
 
-- `Mashup_desc.csv`: `mashup_id`, `description`, `mashup_name`
-- `API_desc.csv`: `api_id`, `description`, `api_name`
+1. Set API key for selected-API-aware residual-text generation.
 
-## Quick Start
+PowerShell:
 
-Default training command:
+```powershell
+$env:YOUR_API_KEY_ENV="your_key_here"
+```
+
+2. Generate a selected-API-aware residual-text file, e.g. `data/llm/residual_text_llm.csv`.
 
 ```bash
-python train.py --data-dir data
+python scripts/build_residual_text.py --data-dir data --output-csv data/llm/residual_text_llm.csv --mode api --model-name your-chat-model --api-key-env YOUR_API_KEY_ENV --api-base-url https://your-api-base/v1
 ```
 
-Equivalent explicit command:
+This step calls an OpenAI-compatible chat API to infer supplementary capability information for each query from the Mashup description and the already selected Web APIs.
+
+3. Run the default training command.
 
 ```bash
-python train.py --data-dir data --training-mode joint
+python train.py --data-dir data --residual-text-csv data/llm/residual_text_llm.csv
 ```
 
-Common alternatives:
-
-```bash
-python train.py --data-dir data --training-mode staged
-python train.py --data-dir data --training-mode no_stage2
-python train.py --data-dir data --encoder-backend sbert --encoder-model all-MiniLM-L6-v2
-python train.py --data-dir data --graph-mode topk --mashup-topk 20 --api-topk 20
-```
-
-By default, training outputs are written under `outputs/`, which is ignored by Git.
-
-## Main Configurable Options
-
-### Encoder backends
-
-- `sbert`
-- `llm_hf`
-- `llm_api`
-
-Examples:
-
-```bash
-python train.py --data-dir data --encoder-backend sbert --encoder-model all-MiniLM-L6-v2
-python train.py --data-dir data --encoder-backend llm_hf --encoder-model BAAI/bge-large-en-v1.5 --max-length 512
-python train.py --data-dir data --encoder-backend llm_api --encoder-model text-embedding-3-large --api-base-url https://api.openai.com/v1 --api-key-env OPENAI_API_KEY
-```
-
-### Split modes
-
-- `standard`
-- `cold_mashup`
-- `cold_api`
-
-### Negative sampling modes
-
-- `random`
-- `strict_global`
-- `hard`
-
-### Fusion and ablation controls
-
-- `--w-explicit`
-- `--w-implicit`
-- `--w-residual`
-- `--w-tss`
-- `--fusion-mode avg|learnable|mlp`
-
-Examples:
-
-```bash
-python train.py --data-dir data --w-implicit 0
-python train.py --data-dir data --w-tss 0
-python train.py --data-dir data --fusion-mode avg
-```
-
-## Text Generation Utilities
-
-The scripts directory includes helpers for building expanded text and residual text from raw descriptions.
-
-Examples:
-
-```bash
-python scripts/build_expanded_text.py --input-csv data/raw/API_desc.csv --output-csv data/llm/api_expanded.csv --id-column api_id --name-column api_name --text-column description --entity-type api --mode existing
-python scripts/build_residual_text.py --data-dir data --output-csv data/llm/residual_text.csv --mode template
-```
-
-For API-based generation, provide a compatible endpoint and key, for example via `OPENAI_API_KEY`.
-
-## Notes
-
-- This is a research prototype rather than a polished benchmark release.
-- Exact reproducibility depends on your local dataset, preprocessing choices, and external model or API settings.
-- The repository excludes datasets, generated text files, cached embeddings, logs, checkpoints, and experiment outputs.
-
-## License
-
-Add a license file if you plan to make reuse terms explicit.
+The generated residual-text file is used by the explicit requirement modeling component in the default pipeline.
